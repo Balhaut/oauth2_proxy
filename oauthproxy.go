@@ -387,9 +387,9 @@ func (p *OAuthProxy) GetRedirect(req *http.Request) (string, error) {
 	return redirect, err
 }
 
-func (p *OAuthProxy) IsWhitelistedPath(path string) (ok bool) {
+func (p *OAuthProxy) IsWhitelistedURI(uri string) (ok bool) {
 	for _, u := range p.compiledRegex {
-		ok = u.MatchString(path)
+		ok = u.MatchString(uri)
 		if ok {
 			return
 		}
@@ -406,24 +406,26 @@ func getRemoteAddr(req *http.Request) (s string) {
 }
 
 func (p *OAuthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	switch path := req.URL.Path; {
-	case path == p.RobotsPath:
-		p.RobotsTxt(rw)
-	case path == p.PingPath:
-		p.PingPage(rw)
-	case p.IsWhitelistedPath(path):
+	if p.IsWhitelistedURI(req.URL.RequestURI()) {
 		p.serveMux.ServeHTTP(rw, req)
-	case path == p.SignInPath:
-		p.SignIn(rw, req)
-	case path == p.OAuthStartPath:
-		p.OAuthStart(rw, req)
-	case path == p.OAuthCallbackPath:
-		p.OAuthCallback(rw, req)
-	case path == p.AuthOnlyPath:
-		p.AuthenticateOnly(rw, req)
-	default:
-		p.Proxy(rw, req)
-	}
+    } else {
+        switch path := req.URL.Path; {
+        case path == p.RobotsPath:
+            p.RobotsTxt(rw)
+        case path == p.PingPath:
+            p.PingPage(rw)
+        case path == p.SignInPath:
+            p.SignIn(rw, req)
+        case path == p.OAuthStartPath:
+            p.OAuthStart(rw, req)
+        case path == p.OAuthCallbackPath:
+            p.OAuthCallback(rw, req)
+        case path == p.AuthOnlyPath:
+            p.AuthenticateOnly(rw, req)
+        default:
+            p.Proxy(rw, req)
+        }
+    }
 }
 
 func (p *OAuthProxy) SignIn(rw http.ResponseWriter, req *http.Request) {
