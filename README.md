@@ -154,7 +154,7 @@ Usage of oauth2_proxy:
   -request-logging=true: Log requests to stdout
   -scope="": Oauth scope specification
   -signature-key="": GAP-Signature request signature key (algorithm:secretkey)
-  -skip-auth-regex=: bypass authentication for request URI's that match (may be given multiple times)
+  -skip-auth-regex=: bypass authentication for request URIs that match (may be given multiple times)
   -tls-cert="": path to certificate file
   -tls-key="": path to private key file
   -upstream=: the http url(s) of the upstream endpoint or file:// paths for static files. Routing is based on the path
