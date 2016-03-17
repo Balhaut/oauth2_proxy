@@ -29,7 +29,9 @@ You will need to register an OAuth application with a Provider (Google, Github o
 Valid providers are :
 
 * [Google](#google-auth-provider) *default*
+* [Azure](#azure-auth-provider)
 * [GitHub](#github-auth-provider)
+* [GitLab](#gitlab-auth-provider)
 * [LinkedIn](#linkedin-auth-provider)
 * [MyUSA](#myusa-auth-provider)
 
@@ -76,6 +78,15 @@ and the user will be checked against all the provided groups.
 
 Note: The user is checked against the group members list on initial authentication and every time the token is refreshed ( about once an hour ).
 
+### Azure Auth Provider
+
+1. [Add an application](https://azure.microsoft.com/en-us/documentation/articles/active-directory-integrating-applications/) to your Azure Active Directory tenant.
+2. On the App properties page provide the correct Sign-On URL ie `https//internal.yourcompany.com/oauth2/callback`
+3. If applicable take note of your `TenantID` and provide it via the `--azure-tenant=<YOUR TENANT ID>` commandline option. Default the `common` tenant is used.
+
+The Azure AD auth provider uses `openid` as it default scope. It uses `https://graph.windows.net` as a default protected resource. It call to `https://graph.windows.net/me` to get the email address of the user that logs in.
+
+
 ### GitHub Auth Provider
 
 1. Create a new project: https://github.com/settings/developers
@@ -84,7 +95,24 @@ Note: The user is checked against the group members list on initial authenticati
 The GitHub auth provider supports two additional parameters to restrict authentication to Organization or Team level access. Restricting by org and team is normally accompanied with `--email-domain=*`
 
     -github-org="": restrict logins to members of this organisation
-    -github-team="": restrict logins to members of this team
+    -github-team="": restrict logins to members of any of these teams, separated by a comma
+
+If you are using github enterprise, make sure you set the following to the appropriate url:
+
+    -login-url="<enterprise github url>/login/oauth/authorize"
+    -redeem-url="<enterprise github url>/login/oauth/access_token"
+    -validate-url="<enterprise github api url>/user/emails"
+
+
+### GitLab Auth Provider
+
+Whether you are using GitLab.com or self-hosting GitLab, follow [these steps to add an application](http://doc.gitlab.com/ce/integration/oauth_provider.html)
+
+If you are using self-hosted GitLab, make sure you set the following to the appropriate URL:
+
+    -login-url="<your gitlab url>/oauth/authorize"
+    -redeem-url="<your gitlab url>/oauth/token"
+    -validate-url="<your gitlab url>/api/v3/user"
 
 
 ### LinkedIn Auth Provider
@@ -102,9 +130,15 @@ For LinkedIn, the registration steps are:
 
 The [MyUSA](https://alpha.my.usa.gov) authentication service ([GitHub](https://github.com/18F/myusa))
 
+### Microsoft Azure AD Provider
+
+For adding an application to the Microsoft Azure AD follow [these steps to add an application](https://azure.microsoft.com/en-us/documentation/articles/active-directory-integrating-applications/).
+
+Take note of your `TenantId` if applicable for your situation. The `TenantId` can be used to override the default `common` authorization server with a tenant specific server.
+
 ## Email Authentication
 
-To authorize by email domain use `--email-domain=yourcompany.com`. To authorize individual email addresses use `--authenticated-emails-file=/path/to/file` with one email per line. To authorize all email addresse use `--email-domain=*`.
+To authorize by email domain use `--email-domain=yourcompany.com`. To authorize individual email addresses use `--authenticated-emails-file=/path/to/file` with one email per line. To authorize all email addresses use `--email-domain=*`.
 
 ## Configuration
 
@@ -120,6 +154,7 @@ An example [oauth2_proxy.cfg](contrib/oauth2_proxy.cfg.example) config file is i
 Usage of oauth2_proxy:
   -approval-prompt="force": Oauth approval_prompt
   -authenticated-emails-file="": authenticate against emails via file (one per line)
+  -azure-tenant="common": go to a tenant-specific or common (tenant-independent) endpoint.
   -basic-auth-password="": the password to set when passing the HTTP Basic Auth header
   -client-id="": the OAuth Client ID: ie: "123456.apps.googleusercontent.com"
   -client-secret="": the OAuth Client Secret
@@ -151,6 +186,7 @@ Usage of oauth2_proxy:
   -proxy-prefix="/oauth2": the url root path that this proxy should be nested under (e.g. /<oauth2>/sign_in)
   -redeem-url="": Token redemption endpoint
   -redirect-url="": the OAuth Redirect URL. ie: "https://internalapp.yourcompany.com/oauth2/callback"
+  -resource="": the resource that is being protected. ie: "https://graph.windows.net". Currently only used in the Azure provider.
   -request-logging=true: Log requests to stdout
   -scope="": Oauth scope specification
   -signature-key="": GAP-Signature request signature key (algorithm:secretkey)
@@ -174,7 +210,16 @@ Multiple upstreams can either be configured by supplying a comma separated list 
 
 ### Environment variables
 
-The environment variables `OAUTH2_PROXY_CLIENT_ID`, `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_COOKIE_SECRET`, `OAUTH2_PROXY_COOKIE_DOMAIN` and `OAUTH2_PROXY_COOKIE_EXPIRE` can be used in place of the corresponding command-line arguments.
+The following environment variables can be used in place of the corresponding command-line arguments:
+
+- `OAUTH2_PROXY_CLIENT_ID`
+- `OAUTH2_PROXY_CLIENT_SECRET`
+- `OAUTH2_PROXY_COOKIE_NAME`
+- `OAUTH2_PROXY_COOKIE_SECRET`
+- `OAUTH2_PROXY_COOKIE_DOMAIN`
+- `OAUTH2_PROXY_COOKIE_EXPIRE`
+- `OAUTH2_PROXY_COOKIE_REFRESH`
+- `OAUTH2_PROXY_SIGNATURE_KEY`
 
 ## SSL Configuration
 
