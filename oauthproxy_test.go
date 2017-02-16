@@ -87,7 +87,6 @@ func TestRobotsTxt(t *testing.T) {
 	rw := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/robots.txt", nil)
 	proxy.ServeHTTP(rw, req)
-	log.Printf("TestRobotsTxt response: %#v", rw)
 	assert.Equal(t, 200, rw.Code)
 	assert.Equal(t, "User-agent: *\nDisallow: /", rw.Body.String())
 }
