@@ -87,8 +87,35 @@ func TestRobotsTxt(t *testing.T) {
 	rw := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/robots.txt", nil)
 	proxy.ServeHTTP(rw, req)
+	log.Printf("TestRobotsTxt response: %#v", rw)
 	assert.Equal(t, 200, rw.Code)
 	assert.Equal(t, "User-agent: *\nDisallow: /", rw.Body.String())
+}
+
+func TestIsWhitelistedURI(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer backend.Close()
+
+	opts := NewOptions()
+	opts.Upstreams = append(opts.Upstreams, backend.URL)
+	opts.ClientID = "bazquux"
+	opts.ClientSecret = "foobar"
+	opts.CookieSecret = "xyzzyplugh"
+	opts.SkipAuthRegex = []string{".*token=validtoken.*"}
+	opts.Validate()
+
+	proxy := NewOAuthProxy(opts, func(string) bool { return true })
+	rw := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/somepath?token=validtoken", nil)
+	proxy.ServeHTTP(rw, req)
+	assert.Equal(t, 200, rw.Code)
+
+	rw = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/somepath?token=invalidtoken", nil)
+	proxy.ServeHTTP(rw, req)
+	assert.Equal(t, 403, rw.Code)
 }
 
 type TestProvider struct {
